@@ -2,17 +2,8 @@ import numpy as np
 import tensorflow as tf
 import scipy.io
 
-
-"""
-The GoogLeNet Net Model used in HDML
-It should be applied as following:
-google_net_model = GoogleNet_Model.GoogleNet_Model(model_dir='')
-embedding = google_net_model.forward(x)
-"""
-
-
 class GoogleNet_Model(object):
-    def __init__(self, model_dir='/home/mayank/Study/CV/HDML/'):
+    def __init__(self, model_dir='/home/mayank/Study/CV/Deep-Variational-Metric-Learning-master/'):
         self.model_dir = model_dir
         self.var_dict = self.variables_dict()
         self.img = tf.placeholder(tf.float32, [None, 227, 227, 3])

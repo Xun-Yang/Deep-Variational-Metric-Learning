@@ -160,6 +160,7 @@ def main(_):
         
         # Training
         epoch_iterator = stream_train.get_epoch_iterator()
+        print("------------",epoch_iterator)
 
         # collectors
         J_m_loss = nn_Ops.data_collector(tag='Jm', init=1e+6)
@@ -203,6 +204,7 @@ def main(_):
                     J_gen_loss.update(var=J_gen_var)
                     cross_entropy_loss.update(cross_en_var)
                 step += 1
+
                 # print('learning rate %f' % _lr)
 
                 # evaluation

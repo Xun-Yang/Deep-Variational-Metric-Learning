@@ -28,30 +28,36 @@ if __name__ == '__main__':
     dataset_name = "cars196"
     archive_basename = "car_ims"
 
-    fuel_root_path = "./datasets/data"
+    fuel_root_path = "./data"
     fuel_data_path = os.path.join(fuel_root_path, dataset_name)
-    image_filepath = os.path.join(fuel_data_path, archive_basename + ".tar.gz")
-    label_filepath = os.path.join(fuel_data_path, "cars_annos.mat")
+    image_filepath = os.path.join(fuel_data_path, "cars_train/")
+    label_filepath = os.path.join(fuel_data_path, "cars_train_annos.mat")
 
     # Extract car_ims.tgz if car_ims directory does not exist
-    with tarfile.open(image_filepath, "r") as tf:
-        jpg_filenames = [fn for fn in tf.getnames() if fn.endswith(".jpg")]
+    jpg_filenames = (os.listdir(image_filepath))
+    # with tarfile.open(image_filepath, "r") as tf:
+    #     jpg_filenames = [fn for fn in tf.getnames() if fn.endswith(".jpg")]
     jpg_filenames.sort()
     num_examples = len(jpg_filenames)  # ????
-    if not os.path.exists(os.path.join(fuel_data_path, archive_basename)):
-        subprocess.call(["tar", "zxvf", image_filepath.replace("\\", "/"),
-                         "-C", fuel_data_path.replace("\\", "/"),
-                         "--force-local"])
+    # if not os.path.exists(os.path.join(fuel_data_path, archive_basename)):
+    #     subprocess.call(["tar", "zxvf", image_filepath.replace("\\", "/"),
+    #                      "-C", fuel_data_path.replace("\\", "/"),
+    #                      "--force-local"])
 
     # Extract class labels
     cars_annos = loadmat(label_filepath)
     annotations = cars_annos["annotations"].ravel()
-    annotations = sorted(annotations, key=lambda a: str(a[0][0]))
+    annotations = sorted(annotations, key=lambda a: str(a[5][0]))
     class_labels = []
+    class_data = []
     for annotation in annotations:
-        class_label = int(annotation[5])
+        class_label = int(annotation[4])
         class_labels.append(class_label)
+        class_data.append((class_label,annotation[5]))
 
+    class_data.sort()
+    class_labels.sort()
+    
     # open hdf5 file
     hdf5_filename = "cars196.hdf5"
     hdf5_filepath = os.path.join(fuel_data_path, hdf5_filename)
@@ -67,10 +73,9 @@ if __name__ == '__main__':
     ds_images.dims[3].label = "width"
 
     # write images to the disk
-    for i, filename in tqdm(enumerate(jpg_filenames), total=num_examples,
-                            desc=hdf5_filepath):
-        raw_image = cv2.imread(os.path.join(fuel_data_path, filename),
-                               cv2.IMREAD_COLOR)  # BGR image
+    for i, field in tqdm(enumerate(class_data), total=num_examples,desc=hdf5_filepath):
+        label, filename = field
+        raw_image = cv2.imread(os.path.join(image_filepath, filename[0]),cv2.IMREAD_COLOR)  # BGR image
         image = preprocess(raw_image, image_size)
         ds_images[i] = image
 
@@ -82,6 +87,7 @@ if __name__ == '__main__':
 
     # specify the splits (labels 1~98 for train, 99~196 for test)
     test_head = class_labels.index(99)
+    print(test_head)
     split_train, split_test = (0, test_head), (test_head, num_examples)
     split_dict = dict(train=dict(images=split_train, targets=split_train),
                       test=dict(images=split_test, targets=split_test))

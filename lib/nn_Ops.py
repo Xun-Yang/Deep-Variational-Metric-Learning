@@ -1,7 +1,7 @@
-from FLAGS import *
 import os
 import tensorlayer as tl
 import numpy as np
+from FLAGS import *
 """
 This file contains some basic blocks that are widely used in CNNs
 """
@@ -140,7 +140,7 @@ def training(loss, lr,  var_scope='None', g_truncate=False, g_limit=2.):
             else:
                 if var_scope != 'None':
                     var_list = tl.layers.get_variables_with_name(var_scope, True, True)
-                    if var_scope == 'Classifier':
+                    if var_scope == 'Feature_extractor':
                         var_list += tl.layers.get_variables_with_name('resnet_model', True, True)
                     train_step = tf.train.AdamOptimizer(lr).minimize(loss, var_list=var_list)
                 else:

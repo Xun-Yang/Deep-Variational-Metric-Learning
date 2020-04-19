@@ -60,7 +60,7 @@ def evaluate_recall(features, labels, neighbours):
     for i in range(0, np.shape(neighbours)[0]):
         recall_i = compute_recall_at_K(D, neighbours[i], labels, num)
         recalls.append(recall_i)
-    print('done')
+    print ('done')
     return recalls
 
   
@@ -197,13 +197,13 @@ def compute_recall_at_K(D, K, class_ids, num):
             num_correct = num_correct + 1
     recall = float(num_correct)/float(num)
 
-    print( 'num_correct:', num_correct)
-    print( 'num:', num)
-    print( "K: %d, Recall: %.3f\n" % (K, recall))
+    print ('num_correct:', num_correct)
+    print ('num:', num)
+    print ("K: %d, Recall: %.3f\n" % (K, recall))
     return recall
 
 
-def Evaluation(stream_test, image_mean, sess, x_raw, label_raw, is_Training, embedding, num_class, neighb):
+def Evaluation(stream_test, image_mean, sess, x_raw, label_raw, is_Training, is_Phase,embedding, num_class, neighb):
     y_batches = []
     c_batches = []
     for batch in tqdm(copy.copy(stream_test.get_epoch_iterator())):
@@ -211,7 +211,7 @@ def Evaluation(stream_test, image_mean, sess, x_raw, label_raw, is_Training, emb
         x_batch_data = np.transpose(x_batch_data[:, [2,1,0], :, :], (0, 2, 3, 1))
         x_batch_data = x_batch_data-image_mean
         y_batch = sess.run([tf.nn.l2_normalize(embedding, dim=1)],
-                           feed_dict={x_raw: x_batch_data, label_raw: c_batch_data, is_Training: False})
+                           feed_dict={x_raw: x_batch_data, label_raw: c_batch_data, is_Training: False,is_Phase:False})
         y_batch_data = y_batch[0]
         y_batches.append(y_batch_data)
         c_batches.append(c_batch_data)
@@ -223,56 +223,4 @@ def Evaluation(stream_test, image_mean, sess, x_raw, label_raw, is_Training, emb
     print(nmi)
     print(f1)
     return nmi, f1, recalls
-
-
-def products_Evaluation(stream_test, image_mean, sess, x_raw, label_raw, is_Training, embedding, num_class, neighb):
-    y_batches = []
-    c_batches = []
-    for batch in tqdm(copy.copy(stream_test.get_epoch_iterator())):
-        x_batch_data, c_batch_data = batch
-        x_batch_data = np.transpose(x_batch_data[:, [2,1,0], :, :], (0, 2, 3, 1))
-        x_batch_data = x_batch_data-image_mean
-        y_batch = sess.run([tf.nn.l2_normalize(embedding, dim=1)],
-                           feed_dict={x_raw: x_batch_data, label_raw: c_batch_data, is_Training: False})
-        y_batch_data = y_batch[0]
-        y_batches.append(y_batch_data)
-        c_batches.append(c_batch_data)
-    y_data = np.concatenate(y_batches)
-    c_data = np.concatenate(c_batches)
-    recalls = evaluate_recall(y_data, c_data, neighbours=neighb)
-    return recalls
-
-
-def Embedding_Saver(stream_test, image_mean, sess, x_raw, label_raw, is_Training, embedding, savepath, step):
-    y_batches = []
-    c_batches = []
-    for batch in tqdm(copy.copy(stream_test.get_epoch_iterator())):
-        x_batch_data, c_batch_data = batch
-        x_batch_data = np.transpose(x_batch_data[:, [2, 1, 0], :, :], (0, 2, 3, 1))
-        x_batch_data = x_batch_data - image_mean
-        y_batch = sess.run([embedding], feed_dict={x_raw: x_batch_data, label_raw: c_batch_data, is_Training: False})
-        y_batch_data = y_batch[0]
-        y_batches.append(y_batch_data)
-        c_batches.append(c_batch_data)
-    y_data = np.concatenate(y_batches)
-    c_data = np.concatenate(c_batches)
-    np.save(savepath + str(step) + '-y_batch.npy', y_data)
-    np.save(savepath + str(step) + '-c_batch.npy', c_data)
-    print('embedding saved')
-
-
-def Embedding_Evaler(step, path, num_class, is_nmi, is_recall, neighb):
-    path = path + step + '-'
-    y_data = np.load(path + 'y_batch.npy')
-    c_data = np.load(path + 'c_batch.npy')
-    print("starts")
-    print(step)
-    if is_nmi:
-        nmi, f1 = evaluate_cluster(y_data, c_data, num_class)
-        print('nmi: %f' % nmi)
-        print('f1: %f' % f1)
-    if is_recall:
-        recalls = evaluate_recall(y_data, c_data, neighb)
-        for i in range(0, np.shape(recalls)[0]):
-            print('Recall@%d: %f' % (neighb[i], recalls[i]))
 

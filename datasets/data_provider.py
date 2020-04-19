@@ -8,8 +8,6 @@ from fuel.streams import DataStream
 from fuel.schemes import IterationScheme, BatchSizeScheme, SequentialScheme
 
 from .cars196_dataset import Cars196Dataset
-from .cub200_2011_dataset import Cub200_2011Dataset
-from .online_products_dataset import OnlineProductsDataset
 from .random_fixed_size_crop_mod import RandomFixedSizeCrop
 
 import random
@@ -66,7 +64,9 @@ def get_streams(batch_size=50, dataset='cars196', method='n_pairs_mc',
     else:
         raise ValueError("`method` must be 'n_pairs_mc' or 'clustering' "
                          "or subclass of IterationScheme.")
-    stream = DataStream(dataset_train, iteration_scheme=scheme)
+    # stream = DataStream(dataset_train, iteration_scheme=scheme)
+    stream = DataStream(dataset_train, iteration_scheme=SequentialScheme(
+            dataset_train.num_examples, batch_size))
     stream_train = RandomFixedSizeCrop(stream, which_sources=('images',),
                                        random_lr_flip=True,
                                        window_shape=crop_size)

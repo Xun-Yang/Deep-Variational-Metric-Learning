@@ -1,2 +1,3 @@
 data/
-datasets/data/
+datasets/data/cars196
+__pycache__

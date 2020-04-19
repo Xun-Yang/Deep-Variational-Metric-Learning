@@ -19,6 +19,7 @@ class Cars196Dataset(H5PYDataset):
         try:
 #            path = find_in_data_path(self._filename)
             path = "datasets/data/cars196/cars196.hdf5"
+            # path = "data/cars196/cars196.hdf5"
         except IOError as e:
             msg = str(e) + (""".
          You need to download the dataset and convert it to hdf5 before.""")
@@ -37,8 +38,14 @@ def load_as_ndarray(which_sets=['train', 'test']):
 
 if __name__ == '__main__':
     dataset = Cars196Dataset(['train'])
+    labels = Cars196Dataset(['train'], sources=['targets'], load_in_memory=True).data_sources
+    # print(labels[0].shape)
+    # for label in labels[0]:
+    #     print(label)
 
-    st = DataStream(
-        dataset, iteration_scheme=SequentialScheme(dataset.num_examples, 1))
+    st = DataStream(dataset, iteration_scheme=SequentialScheme(dataset.num_examples, 1))
     it = st.get_epoch_iterator()
-    it.next()
+    for i in it:
+        print(i)
+        break
+    # it.next()
