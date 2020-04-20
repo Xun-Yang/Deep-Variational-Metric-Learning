@@ -150,6 +150,7 @@ def main(_):
     model_summary()
 
     with tf.Session(config=config) as sess:
+
         summary_writer = tf.summary.FileWriter(LOGDIR,sess.graph)
         sess.run(tf.global_variables_initializer())
         saver = tf.train.Saver()
@@ -168,31 +169,31 @@ def main(_):
         step = 0
 
         epoch_iterator = stream_train.get_epoch_iterator()
-        with tqdm(total=MAX_ITER) as pbar:
-            for batch in copy.copy(epoch_iterator):
-
+        print("Phase 1")
+        for epoch in tqdm(range(NUM_EPOCHS)):
+            print("Epoch: ",epoch)
+            for batch in tqdm(copy.copy(epoch_iterator),total=MAX_ITER):
+                step += 1
                 # get images and labels from batch
                 x_batch_data, Label_raw = nn_Ops.batch_data(batch)
-                pbar.update(1)
 
-                # training part
-                c_train, g_train, s_train, wd_Loss_var, J_KL_var,J_metric_var, J_m_var, \
-                    J_syn_var, J_recon_var, cross_en_var = sess.run(
+                # training step
+                c_train, g_train, s_train, wd_Loss_var, L1_var,L4_var, J_m_var, \
+                    L3_var, L2_var, cross_en_var = sess.run(
                         [c_train_step, g_train_step, s_train_step, wdLoss, L1,
                          L4, J_m, L3, L2, cross_entropy],
                         feed_dict={x_raw: x_batch_data,
                                    label_raw: Label_raw,
                                    is_Training: True,is_Phase:False, 
-                                   lambda1:1, lambda2:0.5, lambda3:0.5, lambda4:1,  lr: _lr})
+                                   lambda1:1, lambda2:1, lambda3:0.1, lambda4:1,  lr: _lr})
                 
                 Jm_loss.update(var=J_m_var)
-                L1_loss.update(var=J_KL_var)
-                L2_loss.update(var=J_recon_var)
-                L3_loss.update(var=J_syn_var)
-                L4_loss.update(var=J_metric_var)
+                L1_loss.update(var=L1_var)
+                L2_loss.update(var=L2_var)
+                L3_loss.update(var=L3_var)
+                L4_loss.update(var=L4_var)
                 cross_entropy_loss.update(cross_en_var)
                 wd_Loss.update(var=wd_Loss_var)
-                step += 1
 
                 # evaluation
                 if step % RECORD_STEP == 0:
@@ -219,29 +220,33 @@ def main(_):
                         print("Saved")
                         saver.save(sess, os.path.join(LOGDIR, "model.ckpt"))
                     summary_writer.flush()
- 
-        with tqdm(total=MAX_ITER) as pbar:
-            for batch in copy.copy(epoch_iterator):
+
+        
+        print("Phase 2")
+        step = 0
+        for epoch in tqdm(range(NUM_EPOCHS)):
+            for batch in tqdm(copy.copy(epoch_iterator),total=MAX_ITER):
+                step += 1
                 # get images and labels from batch
                 x_batch_data, Label_raw = nn_Ops.batch_data(batch)
-                pbar.update(1)
-                c_train, g_train, s_train, wd_Loss_var, J_KL_var,J_metric_var, J_m_var, \
-                    J_syn_var, J_recon_var, cross_en_var = sess.run(
+
+                # training step
+                c_train, g_train, s_train, wd_Loss_var, L1_var,L4_var, J_m_var, \
+                    L3_var, L2_var, cross_en_var = sess.run(
                         [c_train_step, g_train_step, s_train_step, wdLoss, L1,
                          L4, J_m, L3, L2, cross_entropy],
                         feed_dict={x_raw: x_batch_data,
                                    label_raw: Label_raw,
                                    is_Training: True,is_Phase:True,
-                                   lambda1:0.8, lambda2:1, lambda3:0.4, lambda4:0.8, lr: _lr})
+                                   lambda1:0.8, lambda2:1, lambda3:0.2, lambda4:0.8, lr: _lr})
                 
                 Jm_loss.update(var=J_m_var)
-                L1_loss.update(var=J_KL_var)
-                L2_loss.update(var=J_recon_var)
-                L3_loss.update(var=J_syn_var)
-                L4_loss.update(var=J_metric_var)
+                L1_loss.update(var=L1_var)
+                L2_loss.update(var=L2_var)
+                L3_loss.update(var=L3_var)
+                L4_loss.update(var=L4_var)
                 wd_Loss.update(var=wd_Loss_var)
                 cross_entropy_loss.update(cross_en_var)
-                step += 1
 
                 # evaluation
                 if step % RECORD_STEP == 0:

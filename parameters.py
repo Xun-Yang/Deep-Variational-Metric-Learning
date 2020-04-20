@@ -4,11 +4,12 @@ import numpy as np
 BATCH_SIZE=32
 DATASET='cars196'
 IMAGE_SIZE=227
-EMBEDDING_SIZE=128
+EMBEDDING_SIZE=32
 LR_init=7e-5
 LR_gen=1e-2
 LR_s=1e-3
-RECORD_STEP=25
+RECORD_STEP=20
+NUM_EPOCHS=1
 
 # To approximately reduce the mean of input images
 image_mean = np.array([123, 117, 104], dtype=np.float32)  # RGB
