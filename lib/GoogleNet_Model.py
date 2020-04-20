@@ -3,7 +3,7 @@ import tensorflow as tf
 import scipy.io
 
 class GoogleNet_Model(object):
-    def __init__(self, model_dir='/home/mayank/Study/CV/Deep-Variational-Metric-Learning-master/'):
+    def __init__(self, model_dir='/home/mayank/Study/CV/Deep-Variational-Metric-Learning/'):
         self.model_dir = model_dir
         self.var_dict = self.variables_dict()
         self.img = tf.placeholder(tf.float32, [None, 227, 227, 3])

@@ -62,7 +62,7 @@ elif FLAGS.LossType == "Triplet":
     method = 'triplet'
 else:
     method = "clustering"
-print("method: "+method)
+# print("method: "+method)
 
 # Using GPU
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
