@@ -34,7 +34,7 @@ nn_Ops.create_path(_time)
 # tfd = tfp.distributions
 # prior = tfd.Independent(tfd.Normal(loc=tf.zeros(EMBEDDING_SIZE), scale=1),reinterpreted_batch_ndims=1)
 
-def mysampling(z_mean, z_log_var):
+def samplingGaussian(z_mean, z_log_var):
     """Reparameterization trick by sampling from an isotropic unit Gaussian.
     # Arguments
         args (tensor): mean and log of variance of Q(z|X)
@@ -44,6 +44,7 @@ def mysampling(z_mean, z_log_var):
 
     batch = K.shape(z_mean)[0]
     dim = K.int_shape(z_mean)[1]
+
     # by default, random_normal has mean = 0 and std = 1.0
     epsilon = K.random_normal(shape=(batch, dim))
     return z_mean + K.exp(0.5 * z_log_var) * epsilon
@@ -97,7 +98,7 @@ def main(_):
     
     # Generator
     with tf.variable_scope('Generator'):
-        embedding_re = mysampling(embedding_mu, embedding_sigma)
+        embedding_re = samplingGaussian(embedding_mu, embedding_sigma)
         embedding_zv = tf.reshape(embedding_re,(-1,EMBEDDING_SIZE))
         # Z = Zi + Zv
         embedding_z = tf.add(embedding_zi, embedding_zv, name='Synthesized_features')
@@ -166,10 +167,10 @@ def main(_):
         cross_entropy_loss = nn_Ops.data_collector(tag='cross_entropy', init=1e+6)
         wd_Loss = nn_Ops.data_collector(tag='weight_decay', init=1e+6)
         max_nmi = 0
-        step = 0
 
-        epoch_iterator = stream_train.get_epoch_iterator()
         print("Phase 1")
+        step = 0
+        epoch_iterator = stream_train.get_epoch_iterator()
         for epoch in tqdm(range(NUM_EPOCHS)):
             print("Epoch: ",epoch)
             for batch in tqdm(copy.copy(epoch_iterator),total=MAX_ITER):
@@ -214,16 +215,17 @@ def main(_):
                     wd_Loss.write_to_tfboard(eval_summary)
                     cross_entropy_loss.write_to_tfboard(eval_summary)
                     summary_writer.add_summary(eval_summary, step)
-                    print('Summary written')
+                    print('Summary Recorder')
                     if nmi_te > max_nmi:
                         max_nmi = nmi_te
-                        print("Saved")
                         saver.save(sess, os.path.join(LOGDIR, "model.ckpt"))
-                    summary_writer.flush()
+                        print("Model Saved")
+                    summary_writer.flush()    
 
         
         print("Phase 2")
         step = 0
+        epoch_iterator = stream_train.get_epoch_iterator()
         for epoch in tqdm(range(NUM_EPOCHS)):
             for batch in tqdm(copy.copy(epoch_iterator),total=MAX_ITER):
                 step += 1
@@ -268,11 +270,10 @@ def main(_):
                     wd_Loss.write_to_tfboard(eval_summary)
                     cross_entropy_loss.write_to_tfboard(eval_summary)
                     summary_writer.add_summary(eval_summary, step)
-                    print('Summary written')
                     if nmi_te > max_nmi:
                         max_nmi = nmi_te
-                        print("Saved")
                         saver.save(sess, os.path.join(LOGDIR, "model.ckpt"))
+                        print("Model Saved")
                     summary_writer.flush()
 
 if __name__ == '__main__':
