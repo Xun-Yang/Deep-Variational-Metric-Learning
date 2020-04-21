@@ -118,13 +118,13 @@ def main(_):
     with tf.name_scope('L1_KLDivergence'):
     	kl_loss = 1 + embedding_sigma - K.square(embedding_mu) - K.exp(embedding_sigma)
     	kl_loss = K.sum(kl_loss, axis=-1)
-    	kl_loss *= -0.5
+    	kl_loss *= -(0.5/BATCH_SIZE)
     	L1 = lambda1 * K.mean(kl_loss) 
 
     # L2 Loss
     # Definition: L2 = sum( L2Norm( target - outputOf(GoogleNet) ))
     with tf.name_scope('L2_Reconstruction'):
-        L2 = lambda2 * (0.5) * tf.reduce_sum(tf.square(embedding_y2 - embedding_gn))
+        L2 = lambda2 * (1/(20*BATCH_SIZE)) * tf.reduce_sum(tf.square(embedding_y2 - embedding_gn))
 
     # L3 Loss
     # Definition: L3 = Lm( Z )
@@ -171,7 +171,7 @@ def main(_):
         print("Phase 1")
         step = 0
         epoch_iterator = stream_train.get_epoch_iterator()
-        for epoch in tqdm(range(NUM_EPOCHS)):
+        for epoch in tqdm(range(NUM_EPOCHS_PHASE1)):
             print("Epoch: ",epoch)
             for batch in tqdm(copy.copy(epoch_iterator),total=MAX_ITER):
                 step += 1
@@ -224,9 +224,9 @@ def main(_):
 
         
         print("Phase 2")
-        step = 0
         epoch_iterator = stream_train.get_epoch_iterator()
-        for epoch in tqdm(range(NUM_EPOCHS)):
+        for epoch in tqdm(range(NUM_EPOCHS_PHASE2)):
+            print("Epoch: ",epoch)
             for batch in tqdm(copy.copy(epoch_iterator),total=MAX_ITER):
                 step += 1
                 # get images and labels from batch
@@ -270,6 +270,7 @@ def main(_):
                     wd_Loss.write_to_tfboard(eval_summary)
                     cross_entropy_loss.write_to_tfboard(eval_summary)
                     summary_writer.add_summary(eval_summary, step)
+                    print('Summary Recorder')
                     if nmi_te > max_nmi:
                         max_nmi = nmi_te
                         saver.save(sess, os.path.join(LOGDIR, "model.ckpt"))
